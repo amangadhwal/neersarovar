@@ -43,16 +43,16 @@ export class CoinAttributionSystem {
     
     setupLighting() {
         // Add ambient light
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        const ambientLight = new THREE.AmbientLight('#ffffff', 0.5);
         this.scene.add(ambientLight);
         
         // Add directional light
-        this.light = new THREE.DirectionalLight(0xffffff, 1);
+        this.light = new THREE.DirectionalLight('#ffffff', 1);
         this.light.position.set(5, 5, 7);
         this.scene.add(this.light);
         
         // Add point light for shine effect
-        const pointLight = new THREE.PointLight(0xffd700, 1, 10);
+        const pointLight = new THREE.PointLight('#ffd700', 1, 10);
         pointLight.position.set(2, 0, 4);
         this.scene.add(pointLight);
     }
@@ -94,7 +94,7 @@ export class CoinAttributionSystem {
         // Add ring around the coin
         const ringGeometry = new THREE.TorusGeometry(0.85, 0.05, 16, 100);
         const ringMaterial = new THREE.MeshPhongMaterial({
-            color: 0xd4af37,
+            color: '#d4af37',
             metalness: 0.9,
             roughness: 0.1
         });
@@ -106,10 +106,10 @@ export class CoinAttributionSystem {
         // Add embossed design on the coin face
         const designGeometry = new THREE.CircleGeometry(0.6, 32);
         const designMaterial = new THREE.MeshPhongMaterial({
-            color: 0xffcd6b,
+            color: '#ffcd6b',
             metalness: 0.8,
             roughness: 0.3,
-            emissive: 0x3a3100,
+            emissive: '#3a3100',
             emissiveIntensity: 0.3,
             bumpMap: this.createBumpTexture(),
             bumpScale: 0.05
@@ -335,18 +335,36 @@ export class CoinAttributionSystem {
         if (!this.infoElement) return;
         
         // Get current lake info
-        const lake = lakes[activeLakeName] || {};
+        const lake = lakes?.[activeLakeName] || {};
         
-        // Set content
-        this.infoElement.innerHTML = `
-            <div class="coin-info-content">
-                <h3>${lake.title || 'Sacred Lakes'}</h3>
-                <p>${lake.type || ''}</p>
-                <p class="coin-info-description">${lake.description || 'Explore the sacred lakes of the Indian Subcontinent'}</p>
-            </div>
-        `;
+        // Clear previous content
+        while (this.infoElement.firstChild) {
+            this.infoElement.removeChild(this.infoElement.firstChild);
+        }
         
-        // Show info with animation
+        // Create elements using DOM methods
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'coin-info-content';
+        
+        const heading = document.createElement('h3');
+        // Sanitize inputs before assigning to textContent
+        heading.textContent = this.sanitizeText(lake.title) || 'Sacred Lakes';
+        contentDiv.appendChild(heading);
+        
+        const typeP = document.createElement('p');
+        typeP.textContent = this.sanitizeText(lake.type) || '';
+        contentDiv.appendChild(typeP);
+        
+        const descP = document.createElement('p');
+        descP.className = 'coin-info-description';
+        descP.textContent = this.sanitizeText(lake.description) || 
+            'Explore the sacred lakes of the Indian Subcontinent';
+        contentDiv.appendChild(descP);
+        
+        // Append the content div to the info element
+        this.infoElement.appendChild(contentDiv);
+        
+        // Show info with animation (rest of your existing code)
         this.infoElement.style.display = 'block';
         this.infoElement.style.opacity = '0';
         this.infoElement.style.transform = 'translateY(20px)';
@@ -367,6 +385,21 @@ export class CoinAttributionSystem {
                 this.infoElement.style.display = 'none';
             }, 500);
         }, 5000);
+    }
+
+    /**
+     * Sanitize text input to prevent XSS
+     * @param {string} text - Text to sanitize
+     * @returns {string} - Sanitized text
+     */
+    sanitizeText(text) {
+        if (!text) return '';
+        
+        // Convert to string if it's not already
+        const str = String(text);
+        
+        // Remove any potentially dangerous content
+        return str.replace(/<\/?[^>]+(>|$)/g, '');
     }
 
     /**

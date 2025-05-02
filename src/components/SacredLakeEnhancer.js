@@ -387,7 +387,7 @@ export class SacredLakeEnhancer {
         system.particles.forEach(particle => {
             particle.velocity.y += forceY;
             
-            // Add slight randomness to create natural flow
+            // Non-security random value for visual effect only
             particle.velocity.x += (Math.random() - 0.5) * strength * 0.5;
         });
     }
