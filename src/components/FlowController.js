@@ -172,12 +172,16 @@ export class FlowController {
             particle.y < boundary.minY || particle.y > boundary.maxY) {
             
             // Respawn particle at random position inside boundary
-            particle.x = boundary.minX + Math.random() * (boundary.maxX - boundary.minX);
-            particle.y = boundary.minY + Math.random() * (boundary.maxY - boundary.minY);
+            const phi = 1.61803398875;
+            const normalizedIndex = (particle.id * phi) % 1;
+            particle.x = boundary.minX + normalizedIndex * (boundary.maxX - boundary.minX);
+            particle.y = boundary.minY + ((particle.id * phi * phi) % 1) * (boundary.maxY - boundary.minY);
             
             // Reset velocity
-            particle.velocity.x = (Math.random() - 0.5) * 0.5;
-            particle.velocity.y = (Math.random() - 0.5) * 0.5;
+            const angle = (particle.id * 0.1) % (2 * Math.PI);
+            const magnitude = 0.25; // Half of 0.5
+            particle.velocity.x = Math.cos(angle) * magnitude;
+            particle.velocity.y = Math.sin(angle) * magnitude;
             
             // Reset opacity
             particle.opacity = 1.0;
@@ -209,11 +213,11 @@ export class FlowController {
             particle.velocity.y *= slowdown;
             
             // Change appearance near boundary
-            if (!particle.isFrozen && Math.random() < freezeFactor * 0.02) {
+            if (!particle.isFrozen && (frameCount + particle.id) % Math.ceil(50 / freezeFactor) === 0) {
                 // Freeze the particle
                 particle.isFrozen = true;
                 particle.frozenTime = 0;
-                particle.frozenDuration = 2000 + Math.random() * 3000; // 2-5 seconds
+                particle.frozenDuration = 2000 + (particle.id % 6) * 500; // 2-5 seconds in 6 steps
                 
                 // Change appearance
                 if (particle.triggerEffect) {
@@ -245,8 +249,9 @@ export class FlowController {
                 
                 // Restore motion with some randomization
                 if (particle.originalVelocity) {
-                    particle.velocity.x = particle.originalVelocity.x * (0.5 + Math.random() * 0.5);
-                    particle.velocity.y = particle.originalVelocity.y * (0.5 + Math.random() * 0.5);
+                    const velocityFactor = 0.5 + (particle.id % 5) / 10; // Values: 0.5, 0.6, 0.7, 0.8, 0.9
+                    particle.velocity.x = particle.originalVelocity.x * velocityFactor;
+                    particle.velocity.y = particle.originalVelocity.y * velocityFactor;
                     particle.originalVelocity = null;
                 }
                 
@@ -332,18 +337,19 @@ export class FlowController {
             // Apply turbulence near boundary
             const turbulenceFactor = factor * (1 - minDist / margin);
             
-            // Add random velocity changes
-            const turbulenceStrength = 0.08 * turbulenceFactor;
-            particle.velocity.x += (Math.random() - 0.5) * turbulenceStrength;
-            particle.velocity.y += (Math.random() - 0.5) * turbulenceStrength;
+            // Use sine waves with different frequencies for deterministic but varied turbulence
+            const turbulenceOffsetX = Math.sin(frameCount * 0.1 + particle.id * 0.5) * 0.5 * turbulenceFactor;
+            const turbulenceOffsetY = Math.sin(frameCount * 0.12 + particle.id * 0.7) * 0.5 * turbulenceFactor;
+            particle.velocity.x += turbulenceOffsetX;
+            particle.velocity.y += turbulenceOffsetY;
             
-            // Occasionally create swirl effects
-            if (Math.random() < turbulenceFactor * 0.01) {
+            // Create swirl at regular intervals based on particle ID and frame count
+            if ((frameCount + particle.id) % Math.ceil(100 / turbulenceFactor) === 0) {
                 particle.swirling = {
-                    duration: 1000 + Math.random() * 1000,
-                    time: 0,
-                    strength: 0.1 + Math.random() * 0.2 * turbulenceFactor,
-                    direction: Math.random() < 0.5 ? 1 : -1
+                   duration: 1000 + (particle.id % 10) * 100, // 1000-1900ms
+                   time: 0,
+                   strength: 0.1 + (((particle.id * 17) % 10) / 10) * 0.2 * turbulenceFactor, // Varied strengths
+                   direction: (particle.id % 2) === 0 ? 1 : -1 // Alternating directions
                 };
             }
         }

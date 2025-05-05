@@ -412,9 +412,9 @@ export class CoinAttributionSystem {
         this.particles.forEach(particle => {
             particle.userData.exploding = true;
             particle.userData.explodeVelocity = {
-                x: (Math.random() - 0.5) * 0.2,
-                y: (Math.random() - 0.5) * 0.2,
-                z: (Math.random() - 0.5) * 0.2
+                x: ((particle.id % 5) / 5 - 0.5) * 0.2,
+                y: ((particle.id % 7) / 7 - 0.5) * 0.2,
+                z: ((particle.id % 9) / 9 - 0.5) * 0.2
             };
             particle.userData.originalPosition = {
                 x: particle.position.x,
